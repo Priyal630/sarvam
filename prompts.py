@@ -256,45 +256,32 @@ TRANSLATE_TEMPLATES = {
 }
 
 
-# def build_translate_prompt(language: str, mode: str, source_text: str) -> str:
-#     template = TRANSLATE_TEMPLATES.get(language, HINDI_TRANSLATE_TEMPLATE)
-#     mode_instruction = (
-#         "Clean output only — no commentary, no English."
-#         if mode == "clean"
-#         else "Section-wise output in the same order as the English source."
-#     )
-#     return template.format(
-#         mode_instruction=mode_instruction,
-#         shared_rules=SHARED_RULES,
-#         source_text=source_text,
-#     )
-
 def build_translate_prompt(language: str, mode: str, source_text: str) -> str:
 
-    if language == "Hindi":
-        target = "Hindi"
-    elif language == "Marathi":
-        target = "Marathi"
-    else:
-        target = "Gujarati"
+    language_map = {
+        "Hindi": "Hindi",
+        "Marathi": "Marathi",
+        "Gujarati": "Gujarati"
+    }
+
+    target_language = language_map.get(language, "Hindi")
 
     return f"""
-Translate the following English text into {target}.
+Translate the following English text into {target_language}.
 
-Rules:
-- Preserve all numbers exactly.
-- Preserve ₹, $, %, dates and financial figures exactly.
-- Do not explain.
-- Do not repeat instructions.
-- Return ONLY the translated text.
+Output only the translation.
+Do not explain.
+Do not repeat the input.
+Do not translate instructions.
 
 English:
 {source_text}
 
 Translation:
-"""
+""".strip()
 
-def build_review_prompt(language: str, english: str, translated: str) -> str:
+
+def build_review_prompt(language: str, english: str, translated: str):
     issue_categories = ISSUE_CATEGORIES.get(language, ISSUE_CATEGORIES["Hindi"])
     return REVIEW_TEMPLATE.format(
         language=language,
