@@ -62,7 +62,7 @@ def load_model():
                 bnb_config = BitsAndBytesConfig(
                     load_in_4bit=True,
                     bnb_4bit_quant_type="nf4",
-                    bnb_4bit_compute_dtype=torch.bfloat16,
+                    bnb_4bit_compute_dtype=torch.float16,
                     bnb_4bit_use_double_quant=True,
                 )
                 kwargs = dict(quantization_config=bnb_config, device_map="auto")
@@ -78,6 +78,14 @@ def load_model():
                 kwargs = dict(torch_dtype=torch.bfloat16, device_map="auto")
 
             model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, **kwargs)
+
+            import torch
+
+            print("================================")
+            print("CUDA:", torch.cuda.is_available())
+            print("GPU:", torch.cuda.get_device_name(0))
+            print("Model Device:", next(model.parameters()).device)
+            print("================================")
 
             _tokenizer = tokenizer
             _model = model
@@ -120,23 +128,18 @@ def stream_generate(prompt_text, enable_thinking=False):
 
     streamer = TextIteratorStreamer(_tokenizer, skip_prompt=True, skip_special_tokens=True)
 
-    # generation_kwargs = dict(
-    #     **inputs,
-    #     max_new_tokens=MAX_NEW_TOKENS,
-    #     temperature=0.3,
-    #     do_sample=True,
-    #     top_p=0.9,
-    #     repetition_penalty=1.05,
-    #     streamer=streamer,
-    # )
-    
+
     generation_kwargs = dict(
-    **inputs,
-    max_new_tokens=512,
-    temperature=0.0,
-    do_sample=False,
+        **inputs,
+        max_new_tokens=64,
+        do_sample=False,
+        num_beams=1,
+        repetition_penalty=1.0,
+        eos_token_id=_tokenizer.eos_token_id,
+        pad_token_id=_tokenizer.eos_token_id,
+        streamer=streamer,
     )
-    
+
     thread = threading.Thread(target=_model.generate, kwargs=generation_kwargs)
     thread.start()
 
