@@ -256,7 +256,31 @@ TRANSLATE_TEMPLATES = {
 }
 
 
-def build_translate_prompt(language: str, mode: str, source_text: str) -> str:
+# def build_translate_prompt(language: str, mode: str, source_text: str) -> str:
+
+#     language_map = {
+#         "Hindi": "Hindi",
+#         "Marathi": "Marathi",
+#         "Gujarati": "Gujarati"
+#     }
+
+#     target_language = language_map.get(language, "Hindi")
+
+#     return f"""
+# Translate the following English text into {target_language}.
+
+# Output only the translation.
+# Do not explain.
+# Do not repeat the input.
+# Do not translate instructions.
+
+# English:
+# {source_text}
+
+# Translation:
+# """.strip()
+
+def build_translate_prompt(language, mode, source_text):
 
     language_map = {
         "Hindi": "Hindi",
@@ -267,17 +291,12 @@ def build_translate_prompt(language: str, mode: str, source_text: str) -> str:
     target_language = language_map.get(language, "Hindi")
 
     return f"""
-Translate the following English text into {target_language}.
+Translate the following text into {target_language}.
 
-Output only the translation.
-Do not explain.
-Do not repeat the input.
-Do not translate instructions.
-
-English:
+Text:
 {source_text}
 
-Translation:
+Return only the translated text.
 """.strip()
 
 
