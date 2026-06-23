@@ -117,7 +117,37 @@ def stream_generate(prompt_text, enable_thinking=False):
     import torch
     from transformers import TextIteratorStreamer
 
-    messages = [{"role": "user", "content": prompt_text}]
+    # messages = [{"role": "user", "content": prompt_text}]
+    # messages = [
+    #     {
+    #         "role": "system",
+    #         "content": "You are a professional translator. Return only translated text."
+    #     },
+    #     {
+    #         "role": "user",
+    #         "content": prompt_text
+    #     }
+    # ]
+
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You are an expert translator. "
+                "Translate the user's text into the requested language. "
+                "Return only the translation. "
+                "Do not explain. "
+                "Do not output instructions. "
+                "Do not output rules."
+            )
+        },
+        {
+            "role": "user",
+            "content": prompt_text
+        }
+    ]
+
+
     chat_text = _tokenizer.apply_chat_template(
         messages,
         tokenize=False,
@@ -129,12 +159,23 @@ def stream_generate(prompt_text, enable_thinking=False):
     streamer = TextIteratorStreamer(_tokenizer, skip_prompt=True, skip_special_tokens=True)
 
 
+    # generation_kwargs = dict(
+    #     **inputs,
+    #     max_new_tokens=64,
+    #     do_sample=False,
+    #     num_beams=1,
+    #     repetition_penalty=1.0,
+    #     eos_token_id=_tokenizer.eos_token_id,
+    #     pad_token_id=_tokenizer.eos_token_id,
+    #     streamer=streamer,
+    # )
+
     generation_kwargs = dict(
         **inputs,
-        max_new_tokens=64,
+        max_new_tokens=256,
         do_sample=False,
         num_beams=1,
-        repetition_penalty=1.0,
+        repetition_penalty=1.05,
         eos_token_id=_tokenizer.eos_token_id,
         pad_token_id=_tokenizer.eos_token_id,
         streamer=streamer,
@@ -194,9 +235,24 @@ def translate():
                           f"First load can take a few minutes while weights download/load. "
                           f"{_load_error or ''}"}, 503
 
+    # prompt = build_translate_prompt(language, mode, text)
+    # return Response(stream_generate(prompt), mimetype="text/event-stream",
+    #                  headers={"Cache-Control": "no-cache", "Access-Control-Allow-Origin": "*"})
+
     prompt = build_translate_prompt(language, mode, text)
-    return Response(stream_generate(prompt), mimetype="text/event-stream",
-                     headers={"Cache-Control": "no-cache", "Access-Control-Allow-Origin": "*"})
+
+    print("\n====================")
+    print(prompt)
+    print("====================\n")
+
+    return Response(
+        stream_generate(prompt),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Access-Control-Allow-Origin": "*"
+        }
+    )
 
 
 @app.route("/api/review", methods=["POST"])
